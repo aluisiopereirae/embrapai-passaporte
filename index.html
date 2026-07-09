@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EmbrapAI Rural — Assistente digital da propriedade</title>
+<meta name="description" content="Plataforma de troca de valor: o produtor informa dados e recebe inteligência, mercado e crédito. A Embrapa recebe uma base viva para pesquisa e políticas públicas.">
+<meta name="theme-color" content="#14532D">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EmbrapAI">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --verde-mata:#14532D;
+  --verde-medio:#2E7D46;
+  --verde-broto:#5B9E3D;
+  --terra:#7A4A21;
+  --mel:#DFA820;
+  --palha:#F5F7F0;
+  --tinta:#1C2418;
+  --cinza:#5E6B58;
+  --linha:#DDE4D6;
+  --branco:#FFFFFF;
+  --erro:#B3261E;
+  --raio:12px;
+  --sombra:0 1px 2px rgba(28,36,24,.06),0 4px 14px rgba(28,36,24,.07);
+  --fd:'Archivo',sans-serif;
+  --fb:'Karla',sans-serif;
+  --fm:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{font-family:var(--fb);background:var(--palha);color:var(--tinta);font-size:16px;line-height:1.55}
+h1,h2,h3,h4{font-family:var(--fd);line-height:1.15;letter-spacing:-.01em}
+h1{font-size:1.7rem;font-weight:800}
+h2{font-size:1.25rem;font-weight:800}
+h3{font-size:1.02rem;font-weight:700}
+a{color:var(--verde-medio)}
+button{font-family:var(--fb);cursor:pointer}
+input,select,textarea{font-family:var(--fb);font-size:.95rem;padding:.55rem .7rem;border:1.5px solid var(--linha);border-radius:8px;background:var(--branco);color:var(--tinta);width:100%}
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--mel);outline-offset:1px}
+label{font-size:.82rem;font-weight:700;color:var(--cinza);display:block;margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.04em}
+.mono{font-family:var(--fm)}
+
+/* ---------- casca do app ---------- */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.sidebar{background:var(--verde-mata);color:#EAF3EA;padding:1.1rem .9rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--fd);font-weight:900;font-size:1.15rem;letter-spacing:-.02em;color:#fff;display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem}
+.logo .folha{width:26px;height:26px;background:var(--mel);border-radius:50% 0 50% 50%;display:inline-block;flex:none}
+.logo small{display:block;font-family:var(--fb);font-weight:400;font-size:.66rem;letter-spacing:.12em;opacity:.75}
+.nav{margin-top:1rem;display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;align-items:center;gap:.55rem;width:100%;text-align:left;background:none;border:0;color:#D8E6D6;padding:.5rem .6rem;border-radius:8px;font-size:.88rem;font-weight:500}
+.nav button:hover{background:rgba(255,255,255,.09)}
+.nav button.ativo{background:var(--verde-broto);color:#0D2412;font-weight:700}
+.nav .grupo{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;opacity:.55;margin:.85rem .6rem .25rem}
+.nav .ico{width:1.15rem;text-align:center;flex:none}
+
+.main{padding:1.4rem 2rem 4rem;max-width:1060px}
+.topo{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.4rem}
+.topo .quem{font-size:.9rem;color:var(--cinza)}
+.pontos{display:flex;align-items:center;gap:.7rem;background:var(--branco);border:1.5px solid var(--linha);border-radius:999px;padding:.35rem .9rem;box-shadow:var(--sombra)}
+.pontos .num{font-family:var(--fm);font-weight:600;font-size:1.05rem;color:var(--verde-mata)}
+.pontos .nivel{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--terra);background:#F3E8D3;padding:.15rem .55rem;border-radius:999px}
+
+/* ---------- componentes ---------- */
+.cartao{background:var(--branco);border:1.5px solid var(--linha);border-radius:var(--raio);padding:1.15rem 1.25rem;box-shadow:var(--sombra);margin-bottom:1rem}
+.cartao h2{margin-bottom:.35rem}
+.cartao .sub{font-size:.88rem;color:var(--cinza);margin-bottom:.9rem}
+.grade{display:grid;gap:.8rem}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.campo{margin-bottom:.75rem}
+.btn{background:var(--verde-medio);color:#fff;border:0;border-radius:8px;padding:.6rem 1.1rem;font-weight:700;font-size:.92rem}
+.btn:hover{background:var(--verde-mata)}
+.btn.fantasma{background:none;color:var(--verde-mata);border:1.5px solid var(--verde-medio)}
+.btn.mel{background:var(--mel);color:#3A2B00}
+.btn.mini{padding:.3rem .7rem;font-size:.8rem}
+.chip{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;background:#E8F1E4;color:var(--verde-mata)}
+.chip.terra{background:#F3E8D3;color:var(--terra)}
+.chip.alerta{background:#FBE9E7;color:var(--erro)}
+.kpi{background:var(--branco);border:1.5px solid var(--linha);border-radius:var(--raio);padding:.9rem 1rem}
+.kpi .v{font-family:var(--fm);font-size:1.45rem;font-weight:600;color:var(--verde-mata)}
+.kpi .l{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--cinza)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--cinza);padding:.45rem .5rem;border-bottom:2px solid var(--linha)}
+td{padding:.5rem;border-bottom:1px solid var(--linha)}
+td.mono,th.num{font-family:var(--fm)}
+.barra{height:9px;background:#E4EADF;border-radius:99px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--verde-broto);border-radius:99px;transition:width .5s ease}
+.aviso{background:#FFF8E6;border:1.5px solid #EFD98F;border-radius:10px;padding:.7rem .9rem;font-size:.88rem}
+.ok-lista li{list-style:none;padding:.4rem 0;border-bottom:1px dashed var(--linha);font-size:.92rem}
+.ok-lista li::before{content:"✓";color:var(--verde-broto);font-weight:900;margin-right:.55rem}
+.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--verde-mata);color:#fff;padding:.7rem 1.1rem;border-radius:10px;font-weight:700;font-size:.9rem;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(8px);transition:all .3s ease;z-index:99;pointer-events:none}
+.toast.mostra{opacity:1;transform:none}
+.toast .mais{color:var(--mel);font-family:var(--fm)}
+
+/* ---------- assinatura: passaporte ---------- */
+.passaporte{position:relative;background:linear-gradient(135deg,#17603A 0%,#14532D 60%,#0F3D22 100%);color:#EAF3EA;border-radius:16px;padding:1.4rem 1.5rem;overflow:hidden;margin-bottom:1.2rem}
+.passaporte::after{content:"";position:absolute;inset:8px;border:1.5px dashed rgba(255,255,255,.28);border-radius:12px;pointer-events:none}
+.passaporte h2{color:#fff;font-size:1.05rem;letter-spacing:.02em}
+.passaporte .rotulo{font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;opacity:.75}
+.passaporte .dado{font-family:var(--fm);font-size:.95rem}
+.carimbo{position:absolute;right:1.4rem;top:50%;transform:translateY(-50%) rotate(-12deg);width:104px;height:104px;border:3px double var(--mel);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mel);text-align:center;font-family:var(--fd);font-weight:800;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;opacity:.95}
+.carimbo .pct{font-family:var(--fm);font-size:1.35rem;letter-spacing:0}
+.pass-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem 1.4rem;margin-top:1rem;max-width:70%}
+@media(max-width:760px){.pass-grid{max-width:100%;grid-template-columns:repeat(2,1fr)}.carimbo{position:static;transform:rotate(-8deg);margin:.8rem auto 0}}
+
+/* ---------- tabs / chat / misc ---------- */
+.tabs{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:1rem}
+.tabs button{border:1.5px solid var(--linha);background:var(--branco);border-radius:999px;padding:.35rem .85rem;font-size:.85rem;font-weight:700;color:var(--cinza)}
+.tabs button.ativo{background:var(--verde-mata);border-color:var(--verde-mata);color:#fff}
+.chat{display:flex;flex-direction:column;gap:.6rem;max-height:420px;overflow-y:auto;padding:.4rem .2rem;margin-bottom:.8rem}
+.msg{max-width:82%;padding:.6rem .85rem;border-radius:12px;font-size:.92rem;white-space:pre-line}
+.msg.eu{align-self:flex-end;background:var(--verde-medio);color:#fff;border-bottom-right-radius:4px}
+.msg.ia{align-self:flex-start;background:#EDF3EA;border:1.5px solid var(--linha);border-bottom-left-radius:4px}
+.linha-chat{display:flex;gap:.5rem}
+.sim-res{font-family:var(--fm);font-size:.92rem}
+.svgbar{width:100%;height:auto}
+.rodape-nota{font-size:.78rem;color:var(--cinza);margin-top:.6rem}
+.hide{display:none!important}
+
+@media(max-width:860px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;bottom:0;top:auto;height:auto;width:100%;z-index:50;display:flex;align-items:center;gap:.3rem;padding:.4rem .5rem;overflow-x:auto}
+  .sidebar .logo,.sidebar .grupo{display:none}
+  .nav{flex-direction:row;margin-top:0}
+  .nav button{white-space:nowrap;font-size:.78rem;padding:.45rem .6rem}
+  .main{padding:1rem 1rem 6.5rem}
+  .g2,.g3,.g4{grid-template-columns:1fr 1fr}
+}
+
+/* ---------- modo aplicativo (PWA) ---------- */
+@media(max-width:860px){
+  .sidebar{padding-bottom:calc(.4rem + env(safe-area-inset-bottom))}
+  .main{padding-bottom:calc(6.5rem + env(safe-area-inset-bottom))}
+}
+.instalar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(4.2rem + env(safe-area-inset-bottom));z-index:60;background:var(--mel);color:#3A2B00;border:0;border-radius:999px;padding:.6rem 1.2rem;font-weight:800;font-size:.9rem;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+@media(min-width:861px){.instalar{bottom:1.2rem}}
+
+@media print{
+  .sidebar,.topo,.btn,.tabs{display:none!important}
+  body{background:#fff}
+  .cartao{box-shadow:none;border-color:#bbb}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span class="folha" aria-hidden="true"></span><span>EmbrapAI<br><small>PLATAFORMA RURAL</small></span></div>
+    <nav class="nav" id="nav" aria-label="Módulos da plataforma"></nav>
+  </aside>
+  <main class="main">
+    <div class="topo">
+      <div>
+        <h1 id="titulo-pagina">Início</h1>
+        <div class="quem" id="quem"></div>
+      </div>
+      <div class="pontos" title="Seus pontos de participação">
+        <span aria-hidden="true">🌱</span>
+        <span class="num" id="pts">0</span> pts
+        <span class="nivel" id="nivel">Semente</span>
+      </div>
+    </div>
+    <div id="conteudo"></div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   EmbrapAI Rural — aplicativo completo em um arquivo.
+   Funciona 100% no navegador (GitHub Pages). A API em /api é opcional.
+   ===================================================================== */
+
+/* ---------- armazenamento seguro (localStorage com reserva em memória) ---------- */
+const Cofre = (() => {
+  let mem = {};
+  let ok = false;
+  try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); ok = true; } catch(e){ ok = false; }
+  return {
+    ler(k, padrao){ try{ const v = ok ? localStorage.getItem(k) : mem[k]; return v ? JSON.parse(v) : padrao; }catch(e){ return padrao; } },
+    gravar(k, v){ try{ const s = JSON.stringify(v); if(ok) localStorage.setItem(k,s); else mem[k]=s; }catch(e){} }
+  };
+})();
+
+/* ---------- estado ---------- */
+const PADRAO = {
+  pontos: 0,
+  historicoPontos: [],
+  perfil: { nome:'', municipio:'', uf:'MA', areaTotal:'', modulosFiscais:'', caf:false, assistencia:false, irrigacao:false, energia:true, internet:false, areaDegradada:'' },
+  culturas: [],        // {cultura, area, produtividade, mesPlantio}
+  rebanho: { bovinos:'', aves:'', peixes:'', colmeias:'' },
+  sistemas: { saf:false, ilp:false, ilpf:false, sisteminha:false, aquicultura:false, meliponicultura:false, apicultura:false, fruticultura:false, babacu:false, hortalicas:false },
+  saf: { especies:'', idade:'', ha:'' },
+  ilp: { haPasto:'', haLavoura:'', cabecas:'' },
+  aqua: { especie:'tambaqui', biomassa:'', pesoMedio:'', mortalidade:'' },
+  melipo: { colmeias:'', especie:'tiúba (Melipona fasciculata)' },
+  sistem: { galinhas:'', peixes:'', hortaM2:'' },
+  ofertas: [],         // {produto, ton, mes}
+  vendas: [],          // {produto, ton, valor, data}
+  anuncios: [],
+  chat: []
+};
+let S = Object.assign({}, JSON.parse(JSON.stringify(PADRAO)), Cofre.ler('embrapai', {}));
+function salvar(){ Cofre.gravar('embrapai', S); }
+
+/* ---------- gamificação ---------- */
+const NIVEIS = [ [0,'Semente'], [50,'Broto'], [150,'Lavoura'], [300,'Colheita'], [600,'Cooperador'] ];
+const RECOMPENSAS = [
+  [50,'1 análise de solo gratuita (parceiro local)'],
+  [100,'Curso on-line Embrapa à sua escolha'],
+  [150,'Kit de mudas nativas para SAF'],
+  [250,'1 hora de consultoria técnica remota'],
+  [400,'Desconto de 10% no marketplace de insumos'],
+  [600,'Certificado de Boas Práticas + selo digital']
+];
+function pontuar(qtd, motivo){
+  S.pontos += qtd;
+  S.historicoPontos.unshift({qtd, motivo, quando: new Date().toLocaleDateString('pt-BR')});
+  S.historicoPontos = S.historicoPontos.slice(0,40);
+  salvar(); pintarPontos();
+  toast(`+${qtd} pts — ${motivo}`);
+}
+function nivelAtual(){ let n=NIVEIS[0][1]; for(const [min,nome] of NIVEIS){ if(S.pontos>=min) n=nome; } return n; }
+function pintarPontos(){ document.getElementById('pts').textContent=S.pontos; document.getElementById('nivel').textContent=nivelAtual(); }
+let toastTimer=null;
+function toast(txt){
+  const t=document.getElementById('toast');
+  t.innerHTML = txt.startsWith('+') ? `<span class="mais">${txt.split('—')[0]}</span>— ${txt.split('—')[1]||''}` : txt;
+  t.classList.add('mostra');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('mostra'), 2600);
+}
+
+/* ---------- dados de referência (valores médios; ajustáveis) ---------- */
+const CULTURAS = {
+  'mandioca':      {prod:15,  unid:'t/ha', preco:800,  plantio:[12,1,2], colheita:[8,9,10], insumo:'manivas-semente (RENIVA), calcário 1 t/ha'},
+  'milho':         {prod:4,   unid:'t/ha', preco:1100, plantio:[12,1],   colheita:[5,6],    insumo:'sementes 20 kg/ha, NPK 300 kg/ha'},
+  'arroz':         {prod:3.5, unid:'t/ha', preco:1500, plantio:[12,1],   colheita:[5,6],    insumo:'sementes 80 kg/ha'},
+  'feijão-caupi':  {prod:1,   unid:'t/ha', preco:4500, plantio:[1,2],    colheita:[4,5],    insumo:'sementes 25 kg/ha, inoculante'},
+  'tomate':        {prod:45,  unid:'t/ha', preco:2500, plantio:[5,6],    colheita:[8,9],    insumo:'mudas, tutoramento, fertirrigação'},
+  'banana':        {prod:18,  unid:'t/ha', preco:1800, plantio:[12,1],   colheita:[1,12],   insumo:'mudas 1.600/ha, adubação orgânica'},
+  'abacaxi':       {prod:35,  unid:'t/ha', preco:1400, plantio:[1,2],    colheita:[11,12],  insumo:'mudas 40 mil/ha'},
+  'cacau':         {prod:0.8, unid:'t/ha', preco:22000,plantio:[1,2],    colheita:[10,11],  insumo:'mudas clonais, sombreamento'},
+  'açaí':          {prod:6,   unid:'t/ha', preco:3500, plantio:[1,2],    colheita:[8,11],   insumo:'mudas 400/ha, irrigação'},
+  'hortaliças':    {prod:20,  unid:'t/ha', preco:3000, plantio:[1,12],   colheita:[1,12],   insumo:'sementes, composto orgânico'},
+  'babaçu (amêndoa)':{prod:0.25,unid:'t/ha',preco:5000,plantio:[0],      colheita:[8,12],   insumo:'extrativismo manejado'},
+  'mel (kg/colmeia)':{prod:0,  unid:'kg',   preco:60,   plantio:[0],      colheita:[9,12],   insumo:'—'}
+};
+const MESES = ['—','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+/* demandas de mercado simuladas (na versão com API, vêm do banco) */
+const DEMANDAS = [
+  {comprador:'Supermercado Mateus (São Luís)', produto:'mandioca', ton:8,  mes:9,  preco:900,  tipo:'Varejo'},
+  {comprador:'Prefeitura — PNAE (Itapecuru)',  produto:'hortaliças', ton:2, mes:8, preco:3200, tipo:'PNAE'},
+  {comprador:'CONAB — PAA (MA)',               produto:'feijão-caupi', ton:5, mes:5, preco:4800,tipo:'PAA'},
+  {comprador:'Cooperativa COOPFRUTA',          produto:'banana', ton:12, mes:10, preco:1900, tipo:'Cooperativa'},
+  {comprador:'Agroindústria de fécula (Bacabal)', produto:'mandioca', ton:40, mes:10, preco:820, tipo:'Agroindústria'},
+  {comprador:'Rede de restaurantes (São Luís)',   produto:'tomate', ton:40, mes:9,  preco:2700, tipo:'Foodservice'},
+  {comprador:'CEASA-MA',                        produto:'abacaxi', ton:15, mes:12, preco:1500, tipo:'CEASA'},
+  {comprador:'Exportadora de mel (Barreirinhas)', produto:'mel (kg/colmeia)', ton:1.5, mes:11, preco:75, tipo:'Exportação'}
+];
+
+/* tecnologias Embrapa — motor de recomendação por regras */
+const TECNOLOGIAS = [
+  {nome:'RENIVA — Rede de manivas-semente', regra:s=>s.culturas.some(c=>c.cultura==='mandioca'),
+   por:'Você cultiva mandioca. Manivas de qualidade elevam a produtividade em 30–60%.',
+   invest:'R$ 400–800/ha', retorno:'+4 a +8 t/ha', ambiente:'Menos área para a mesma produção', credito:'Pronaf Custeio'},
+  {nome:'Sisteminha Embrapa', regra:s=>num(s.perfil.areaTotal)>0 && num(s.perfil.areaTotal)<=10 && !s.sistemas.sisteminha,
+   por:'Propriedade de pequeno porte: produção integrada de proteína e hortaliças em ~100 m².',
+   invest:'R$ 3–8 mil', retorno:'Alimentação da família + excedente de R$ 400–900/mês', ambiente:'Reuso de água e nutrientes', credito:'Pronaf B / Fomento Rural'},
+  {nome:'ILPF — Integração Lavoura-Pecuária-Floresta', regra:s=>num(s.ilp.haPasto)>=5||num(s.rebanho.bovinos)>=10,
+   por:'Você tem pastagem e rebanho. ILPF intensifica a produção e estoca carbono.',
+   invest:'R$ 4–7 mil/ha', retorno:'+40–70% de receita/ha em 5 anos', ambiente:'5–10 t CO₂e/ha/ano estocadas', credito:'RenovAgro (ABC+)'},
+  {nome:'SAF — Sistema Agroflorestal', regra:s=>!s.sistemas.saf && (s.sistemas.fruticultura||s.sistemas.babacu||num(s.perfil.areaDegradada)>0),
+   por:'Diversifica renda (frutas, madeira, amêndoas) e recupera áreas degradadas.',
+   invest:'R$ 8–15 mil/ha (implantação)', retorno:'R$ 6–20 mil/ha/ano após 4–6 anos', ambiente:'Biodiversidade + carbono', credito:'Pronaf Floresta / ABC+'},
+  {nome:'AFERE — Restauração florestal', regra:s=>num(s.perfil.areaDegradada)>0,
+   por:`Você declarou área degradada. AFERE orienta a recuperação de baixo custo.`,
+   invest:'R$ 2–6 mil/ha', retorno:'Regularização ambiental (CAR) + PSA futuros', ambiente:'Recuperação de solo e água', credito:'Pronaf Floresta'},
+  {nome:'Meliponicultura (tiúba/uruçu)', regra:s=>!s.sistemas.meliponicultura && (s.sistemas.saf||s.sistemas.fruticultura),
+   por:'Suas frutíferas ganham polinização; o mel de melipona vale 3–5× o mel comum.',
+   invest:'R$ 250–400/colmeia', retorno:'R$ 300–600/colmeia/ano', ambiente:'Polinizadores nativos', credito:'Pronaf B'},
+  {nome:'Aquicultura (tambaqui/tilápia)', regra:s=>!s.sistemas.aquicultura && (s.perfil.irrigacao||num(s.rebanho.peixes)>0),
+   por:'Você dispõe de água. Piscicultura aproveita o recurso e diversifica a renda.',
+   invest:'R$ 15–40 mil (viveiro 1.000 m²)', retorno:'R$ 12–25 mil/ciclo', ambiente:'Água de despesca fertiliza a horta', credito:'Pronaf Mais Alimentos'},
+  {nome:'BRS Capiaçu (capim para silagem)', regra:s=>num(s.rebanho.bovinos)>=5,
+   por:'Volumoso de alta produção para segurar o rebanho na seca.',
+   invest:'R$ 3–5 mil/ha', retorno:'180–250 t/ha/ano de massa verde', ambiente:'Menos pressão sobre pasto nativo', credito:'Pronaf Custeio'}
+];
+
+/* políticas públicas — regras de elegibilidade simplificadas */
+const POLITICAS = [
+  {nome:'Pronaf B (microcrédito até R$ 10 mil)', regra:s=>s.perfil.caf && num(s.perfil.areaTotal)<=20},
+  {nome:'Pronaf Mais Alimentos (investimento)', regra:s=>s.perfil.caf},
+  {nome:'RenovAgro / ABC+ (agricultura de baixo carbono)', regra:s=>s.sistemas.ilpf||s.sistemas.ilp||s.sistemas.saf},
+  {nome:'PAA — Programa de Aquisição de Alimentos', regra:s=>s.perfil.caf && s.culturas.length>0},
+  {nome:'PNAE — Alimentação Escolar (30% da merenda)', regra:s=>s.perfil.caf && (s.sistemas.hortalicas||s.culturas.length>0)},
+  {nome:'Garantia-Safra (semiárido)', regra:s=>s.perfil.caf && num(s.perfil.areaTotal)<=5},
+  {nome:'Crédito de carbono (mercado voluntário)', regra:s=>s.sistemas.saf||s.sistemas.ilpf},
+  {nome:'Editais FAPEMA / ATeG SENAR', regra:s=>true}
+];
+
+/* ---------- utilidades ---------- */
+const R$ = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const num = v => { const n=parseFloat(String(v).replace(',','.')); return isNaN(n)?0:n; };
+const el = id => document.getElementById(id);
+function v(id){ return el(id) ? el(id).value : ''; }
+function esc(t){ return String(t).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+/* completude do passaporte (0–100) */
+function completude(){
+  let p=0;
+  if(S.perfil.nome) p+=10; if(S.perfil.municipio) p+=10; if(num(S.perfil.areaTotal)>0) p+=15;
+  if(S.culturas.length) p+=20; if(Object.values(S.sistemas).some(Boolean)) p+=15;
+  if(num(S.rebanho.bovinos)+num(S.rebanho.aves)+num(S.rebanho.peixes)+num(S.rebanho.colmeias)>0) p+=10;
+  if(S.perfil.caf) p+=10; if(S.ofertas.length) p+=10;
+  return Math.min(100,p);
+}
+/* produção prevista por cultura */
+function previsoes(){
+  return S.culturas.map(c=>{
+    const ref=CULTURAS[c.cultura]||{prod:0,preco:0,colheita:[0]};
+    const prod = num(c.produtividade)>0 ? num(c.produtividade) : ref.prod;
+    const ton = +(num(c.area)*prod).toFixed(1);
+    return {...c, ton, receita: ton*ref.preco, mesColheita: ref.colheita[0], preco: ref.preco, insumo: ref.insumo};
+  });
+}
+function carbono(){ // estimativa simples de estoque anual
+  let t=0;
+  t += num(S.saf.ha)*8;                    // SAF ~8 t CO2e/ha/ano
+  if(S.sistemas.ilpf) t += num(S.ilp.haPasto)*5;
+  else if(S.sistemas.ilp) t += num(S.ilp.haPasto)*1.5;
+  return +t.toFixed(1);
+}
+</script>
+
+
+<script>
+/* =====================================================================
+   BLOCO 2 — navegação e módulos: Início, Passaporte, Planejamento, Mercado
+   ===================================================================== */
+const MODULOS = [
+  ['inicio','⌂','Início'],
+  ['grupo','','Minha propriedade'],
+  ['passaporte','🪪','Passaporte Digital'],
+  ['planejamento','📅','Planejamento'],
+  ['sistemas','🌳','Sistemas produtivos'],
+  ['grupo','','Renda'],
+  ['mercado','🤝','Mercado garantido'],
+  ['marketplace','🛒','Marketplace'],
+  ['politicas','🏛️','Crédito e políticas'],
+  ['grupo','','Inteligência'],
+  ['tecnologias','🔬','Tecnologias Embrapa'],
+  ['simulador','🧮','Gêmeo digital'],
+  ['clima','⛅','Clima e alertas'],
+  ['assistente','💬','Assistente IA'],
+  ['grupo','','Registros'],
+  ['certificacao','📜','Certificação'],
+  ['recompensas','🏅','Pontos e prêmios'],
+  ['painel','📊','Painel Embrapa']
+];
+let paginaAtual='inicio';
+function montarNav(){
+  const nav=el('nav'); nav.innerHTML='';
+  for(const [id,ico,nome] of MODULOS){
+    if(id==='grupo'){ const g=document.createElement('div'); g.className='grupo'; g.textContent=nome; nav.appendChild(g); continue; }
+    const b=document.createElement('button');
+    b.innerHTML=`<span class="ico" aria-hidden="true">${ico}</span>${nome}`;
+    b.onclick=()=>ir(id);
+    b.dataset.id=id;
+    nav.appendChild(b);
+  }
+}
+function ir(id){
+  paginaAtual=id;
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('ativo',b.dataset.id===id));
+  const nome=MODULOS.find(m=>m[0]===id); el('titulo-pagina').textContent=nome?nome[2]:'';
+  PAGINAS[id]();
+  el('conteudo').scrollIntoView({block:'start'});
+}
+function quem(){
+  el('quem').textContent = S.perfil.nome ? `${S.perfil.nome} — ${S.perfil.municipio||'município não informado'} · ${S.perfil.areaTotal||'?'} ha` : 'Complete seu Passaporte Digital para liberar todos os serviços.';
+}
+
+/* ---------- páginas ---------- */
+const PAGINAS = {};
+
+PAGINAS.inicio = () => {
+  const c=completude(), prev=previsoes();
+  const receita=prev.reduce((a,b)=>a+b.receita,0), tons=prev.reduce((a,b)=>a+b.ton,0);
+  const aptas=POLITICAS.filter(p=>p.regra(S)).length;
+  const recs=TECNOLOGIAS.filter(t=>t.regra(S)).length;
+  el('conteudo').innerHTML = `
+  <div class="passaporte">
+    <div class="rotulo">Passaporte digital da propriedade</div>
+    <h2>${esc(S.perfil.nome||'Sua propriedade')}</h2>
+    <div class="pass-grid">
+      <div><div class="rotulo">Município</div><div class="dado">${esc(S.perfil.municipio||'—')}/${esc(S.perfil.uf)}</div></div>
+      <div><div class="rotulo">Área total</div><div class="dado">${S.perfil.areaTotal||'—'} ha</div></div>
+      <div><div class="rotulo">Culturas</div><div class="dado">${S.culturas.length}</div></div>
+      <div><div class="rotulo">Sistemas</div><div class="dado">${Object.entries(S.sistemas).filter(([k,x])=>x).map(([k])=>k.toUpperCase()).join(', ')||'—'}</div></div>
+      <div><div class="rotulo">Produção prevista</div><div class="dado">${tons.toFixed(1)} t/ano</div></div>
+      <div><div class="rotulo">Carbono estocado</div><div class="dado">${carbono()} t CO₂e/ano</div></div>
+    </div>
+    <div class="carimbo"><span class="pct">${c}%</span>completo<br>verificado</div>
+  </div>
+  <div class="grade g4">
+    <div class="kpi"><div class="v">${R$(receita)}</div><div class="l">Receita bruta prevista</div></div>
+    <div class="kpi"><div class="v">${aptas}</div><div class="l">Políticas em que você está apto</div></div>
+    <div class="kpi"><div class="v">${recs}</div><div class="l">Tecnologias recomendadas</div></div>
+    <div class="kpi"><div class="v">${S.pontos}</div><div class="l">Pontos acumulados</div></div>
+  </div>
+  <div class="cartao">
+    <h2>Como funciona a troca de valor</h2>
+    <p class="sub">Cada dado que você informa gera um serviço de volta. Quanto mais completo o passaporte, melhores as previsões, os compradores e o crédito.</p>
+    <ul class="ok-lista">
+      <li>Você informa área e culturas → recebe <b>previsão de produção, insumos e calendário</b>.</li>
+      <li>Você informa quanto e quando vai colher → a plataforma <b>encontra compradores</b> (PNAE, PAA, cooperativas, CEASA) e monta <b>lotes coletivos</b> com vizinhos.</li>
+      <li>Você mantém os dados em dia → ganha <b>pontos</b> trocáveis por análises de solo, cursos, mudas e consultorias.</li>
+      <li>A Embrapa recebe indicadores <b>agregados e anônimos</b> → melhora as tecnologias e orienta políticas públicas, sem levantamentos presenciais repetidos.</li>
+    </ul>
+    <p style="margin-top:.9rem"><button class="btn" onclick="ir('passaporte')">Completar meu passaporte</button>
+    <button class="btn fantasma" onclick="ir('mercado')">Ver compradores</button></p>
+  </div>`;
+  quem();
+};
+
+PAGINAS.passaporte = () => {
+  const chk=(k)=>S.sistemas[k]?'checked':'';
+  el('conteudo').innerHTML = `
+  <div class="cartao">
+    <h2>1 · Identificação</h2>
+    <p class="sub">Estes dados alimentam todos os outros módulos. +5 a +15 pts por seção salva.</p>
+    <div class="grade g3">
+      <div class="campo"><label for="f-nome">Nome do produtor / propriedade</label><input id="f-nome" value="${esc(S.perfil.nome)}"></div>
+      <div class="campo"><label for="f-mun">Município</label><input id="f-mun" value="${esc(S.perfil.municipio)}" placeholder="ex.: Itapecuru-Mirim"></div>
+      <div class="campo"><label for="f-area">Área total (ha)</label><input id="f-area" type="number" min="0" step="0.1" value="${esc(S.perfil.areaTotal)}"></div>
+      <div class="campo"><label for="f-deg">Área degradada (ha)</label><input id="f-deg" type="number" min="0" step="0.1" value="${esc(S.perfil.areaDegradada)}"></div>
+      <div class="campo"><label><input type="checkbox" id="f-caf" ${S.perfil.caf?'checked':''} style="width:auto"> Possui CAF/DAP (agricultura familiar)</label>
+        <label style="margin-top:.4rem"><input type="checkbox" id="f-irr" ${S.perfil.irrigacao?'checked':''} style="width:auto"> Irrigação / água disponível</label></div>
+      <div class="campo"><label><input type="checkbox" id="f-ast" ${S.perfil.assistencia?'checked':''} style="width:auto"> Recebe assistência técnica</label>
+        <label style="margin-top:.4rem"><input type="checkbox" id="f-net" ${S.perfil.internet?'checked':''} style="width:auto"> Internet na propriedade</label></div>
+    </div>
+    <button class="btn" onclick="salvarPerfil()">Salvar identificação</button>
+  </div>
+
+  <div class="cartao">
+    <h2>2 · Sistemas produtivos presentes</h2>
+    <div class="grade g4" style="font-size:.92rem">
+      ${['saf|SAF','ilp|ILP','ilpf|ILPF','sisteminha|Sisteminha','aquicultura|Aquicultura','meliponicultura|Meliponicultura','apicultura|Apicultura','fruticultura|Fruticultura','babacu|Babaçu','hortalicas|Hortaliças'].map(x=>{const [k,n]=x.split('|');return `<label style="text-transform:none;font-size:.9rem"><input type="checkbox" data-sis="${k}" ${chk(k)} style="width:auto"> ${n}</label>`;}).join('')}
+    </div>
+    <button class="btn" style="margin-top:.6rem" onclick="salvarSistemas()">Salvar sistemas</button>
+  </div>
+
+  <div class="cartao">
+    <h2>3 · Culturas e histórico</h2>
+    <p class="sub">Se você não souber a produtividade, deixe em branco: usamos a média regional.</p>
+    <div class="grade g4">
+      <div class="campo"><label for="c-cult">Cultura</label><select id="c-cult">${Object.keys(CULTURAS).map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="campo"><label for="c-area">Área (ha)</label><input id="c-area" type="number" min="0" step="0.1"></div>
+      <div class="campo"><label for="c-prod">Produtividade (t/ha)</label><input id="c-prod" type="number" min="0" step="0.1" placeholder="média regional"></div>
+      <div class="campo" style="align-self:end"><button class="btn" onclick="addCultura()">Adicionar</button></div>
+    </div>
+    <table><thead><tr><th>Cultura</th><th class="num">Área</th><th class="num">Produtiv.</th><th class="num">Previsão</th><th></th></tr></thead>
+    <tbody>${previsoes().map((c,i)=>`<tr><td>${esc(c.cultura)}</td><td class="mono">${c.area} ha</td><td class="mono">${num(c.produtividade)||CULTURAS[c.cultura].prod} t/ha</td><td class="mono">${c.ton} t</td><td><button class="btn mini fantasma" onclick="delCultura(${i})">remover</button></td></tr>`).join('')||'<tr><td colspan="5" style="color:var(--cinza)">Nenhuma cultura cadastrada ainda.</td></tr>'}</tbody></table>
+  </div>
+
+  <div class="cartao">
+    <h2>4 · Rebanho e criações</h2>
+    <div class="grade g4">
+      <div class="campo"><label for="r-bov">Bovinos (cab.)</label><input id="r-bov" type="number" min="0" value="${esc(S.rebanho.bovinos)}"></div>
+      <div class="campo"><label for="r-ave">Aves</label><input id="r-ave" type="number" min="0" value="${esc(S.rebanho.aves)}"></div>
+      <div class="campo"><label for="r-pei">Peixes (kg biomassa)</label><input id="r-pei" type="number" min="0" value="${esc(S.rebanho.peixes)}"></div>
+      <div class="campo"><label for="r-col">Colmeias</label><input id="r-col" type="number" min="0" value="${esc(S.rebanho.colmeias)}"></div>
+    </div>
+    <button class="btn" onclick="salvarRebanho()">Salvar rebanho</button>
+  </div>`;
+};
+function salvarPerfil(){
+  S.perfil.nome=v('f-nome'); S.perfil.municipio=v('f-mun'); S.perfil.areaTotal=v('f-area');
+  S.perfil.areaDegradada=v('f-deg'); S.perfil.caf=el('f-caf').checked; S.perfil.irrigacao=el('f-irr').checked;
+  S.perfil.assistencia=el('f-ast').checked; S.perfil.internet=el('f-net').checked;
+  salvar(); pontuar(15,'Identificação atualizada'); quem();
+}
+function salvarSistemas(){
+  document.querySelectorAll('[data-sis]').forEach(c=>S.sistemas[c.dataset.sis]=c.checked);
+  salvar(); pontuar(12,'Sistemas produtivos atualizados');
+}
+function addCultura(){
+  if(num(v('c-area'))<=0){ toast('Informe a área da cultura.'); return; }
+  S.culturas.push({cultura:v('c-cult'), area:num(v('c-area')), produtividade:v('c-prod')});
+  salvar(); pontuar(10,'Cultura cadastrada'); PAGINAS.passaporte();
+}
+function delCultura(i){ S.culturas.splice(i,1); salvar(); PAGINAS.passaporte(); }
+function salvarRebanho(){
+  S.rebanho={bovinos:v('r-bov'),aves:v('r-ave'),peixes:v('r-pei'),colmeias:v('r-col')};
+  salvar(); pontuar(8,'Rebanho atualizado');
+}
+
+PAGINAS.planejamento = () => {
+  const prev=previsoes();
+  if(!prev.length){ el('conteudo').innerHTML=`<div class="cartao"><h2>Sem culturas cadastradas</h2><p class="sub">Cadastre suas culturas no Passaporte Digital para receber previsão de produção, insumos e calendário.</p><button class="btn" onclick="ir('passaporte')">Ir para o passaporte</button></div>`; return; }
+  const receita=prev.reduce((a,b)=>a+b.receita,0);
+  el('conteudo').innerHTML = `
+  <div class="grade g3">
+    <div class="kpi"><div class="v">${prev.reduce((a,b)=>a+b.ton,0).toFixed(1)} t</div><div class="l">Produção total prevista</div></div>
+    <div class="kpi"><div class="v">${R$(receita)}</div><div class="l">Receita bruta estimada</div></div>
+    <div class="kpi"><div class="v">${R$(receita*0.55)}</div><div class="l">Margem estimada (≈55%)</div></div>
+  </div>
+  <div class="cartao">
+    <h2>Previsão por cultura</h2>
+    <p class="sub">Exemplo do modelo: "Com sua área de 6 ha de mandioca e o histórico informado, espera-se ~95 t." Os valores usam sua produtividade declarada ou a média regional.</p>
+    <table><thead><tr><th>Cultura</th><th class="num">Área</th><th class="num">Produção</th><th class="num">Preço médio</th><th class="num">Receita</th><th>Insumos principais</th></tr></thead>
+    <tbody>${prev.map(c=>`<tr><td><b>${esc(c.cultura)}</b></td><td class="mono">${c.area} ha</td><td class="mono">${c.ton} t</td><td class="mono">${R$(c.preco)}/t</td><td class="mono">${R$(c.receita)}</td><td style="font-size:.82rem;color:var(--cinza)">${c.insumo}</td></tr>`).join('')}</tbody></table>
+  </div>
+  <div class="cartao">
+    <h2>Calendário agrícola (Maranhão)</h2>
+    <table><thead><tr><th>Cultura</th><th>Plantio ideal</th><th>Colheita</th><th>Janela até a colheita</th></tr></thead>
+    <tbody>${prev.map(c=>{const r=CULTURAS[c.cultura];const pl=r.plantio[0]?r.plantio.map(m=>MESES[m]).join(' – '):'contínuo';const co=r.colheita.map(m=>MESES[m]).join(' – ');const hoje=new Date().getMonth()+1;const falta=((r.colheita[0]-hoje)+12)%12;return `<tr><td><b>${esc(c.cultura)}</b></td><td>${pl}</td><td>${co}</td><td class="mono">${r.colheita[0]?falta+' meses':'—'}</td></tr>`;}).join('')}</tbody></table>
+    <p class="rodape-nota">Janelas baseadas no regime de chuvas do MA (dez–mai). Ajuste fino com a previsão climática do módulo Clima.</p>
+  </div>
+  <div class="cartao">
+    <h2>Transformar previsão em oferta de venda</h2>
+    <p class="sub">Publique sua colheita futura no Mercado Garantido com um clique. +8 pts por oferta.</p>
+    ${prev.map((c,i)=>`<button class="btn fantasma mini" style="margin:.2rem" onclick="ofertar(${i})">Ofertar ${c.ton} t de ${esc(c.cultura)} (${MESES[c.mesColheita]||'—'})</button>`).join('')}
+  </div>`;
+};
+function ofertar(i){
+  const c=previsoes()[i];
+  S.ofertas.push({produto:c.cultura, ton:c.ton, mes:c.mesColheita||9});
+  salvar(); pontuar(8,'Oferta publicada no mercado'); ir('mercado');
+}
+</script>
+
+
+<script>
+/* =====================================================================
+   BLOCO 3 — Mercado garantido, venda coletiva, marketplace, políticas,
+   tecnologias, sistemas produtivos
+   ===================================================================== */
+PAGINAS.mercado = () => {
+  const matches = S.ofertas.map(o=>{
+    const d = DEMANDAS.filter(x=>x.produto===o.produto && Math.abs(((x.mes-o.mes)+12)%12)<=2);
+    return {oferta:o, demandas:d};
+  });
+  el('conteudo').innerHTML = `
+  <div class="cartao">
+    <h2>Suas ofertas</h2>
+    <p class="sub">A plataforma cruza automaticamente o que você vai colher com quem quer comprar.</p>
+    ${S.ofertas.length? `<table><thead><tr><th>Produto</th><th class="num">Quantidade</th><th>Disponível em</th><th>Compradores compatíveis</th><th></th></tr></thead><tbody>
+      ${matches.map((m,i)=>`<tr><td><b>${esc(m.oferta.produto)}</b></td><td class="mono">${m.oferta.ton} t</td><td>${MESES[m.oferta.mes]}</td><td>${m.demandas.length? `<span class="chip">🔔 ${m.demandas.length} interessado(s)</span>`:'<span style="color:var(--cinza)">aguardando</span>'}</td><td><button class="btn mini fantasma" onclick="S.ofertas.splice(${i},1);salvar();PAGINAS.mercado()">retirar</button></td></tr>`).join('')}
+    </tbody></table>` : '<p class="sub">Nenhuma oferta ainda. Publique a partir do <a href="#" onclick="ir(\'planejamento\');return false">Planejamento</a>.</p>'}
+  </div>
+  ${matches.filter(m=>m.demandas.length).map(m=>m.demandas.map(d=>{
+    const cobre = m.oferta.ton>=d.ton;
+    const faltam = Math.max(0, d.ton-m.oferta.ton);
+    const nProd = Math.ceil(faltam/Math.max(1,m.oferta.ton));
+    return `<div class="cartao" style="border-left:5px solid var(--mel)">
+      <h3>🔔 ${esc(d.comprador)} quer ${d.ton} t de ${esc(d.produto)} em ${MESES[d.mes]} <span class="chip terra">${d.tipo}</span></h3>
+      <p class="sub">Preço de referência: <b class="mono">${R$(d.preco)}/t</b> · valor potencial para você: <b class="mono">${R$(Math.min(m.oferta.ton,d.ton)*d.preco)}</b></p>
+      ${cobre
+        ? `<p>✅ Sua produção <b>cobre sozinha</b> esta demanda.</p>`
+        : `<p>Sua oferta cobre <b>${m.oferta.ton} t</b>. Faltam <b>${faltam.toFixed(1)} t</b> — a plataforma encontrou <b>${nProd+3} produtores</b> da sua região com produção semelhante e pode montar um <b>lote coletivo</b> automaticamente.</p>
+           <div class="barra" style="margin:.5rem 0"><i style="width:${Math.min(100,m.oferta.ton/d.ton*100)}%"></i></div>`}
+      <button class="btn mel" onclick="fecharVenda('${esc(d.produto)}',${Math.min(m.oferta.ton,d.ton)},${d.preco})">Manifestar interesse ${cobre?'':'no lote coletivo'}</button>
+    </div>`;}).join('')).join('')}
+  <div class="cartao">
+    <h2>Demandas abertas na sua região</h2>
+    <table><thead><tr><th>Comprador</th><th>Produto</th><th class="num">Qtd.</th><th>Quando</th><th class="num">Preço</th><th>Canal</th></tr></thead>
+    <tbody>${DEMANDAS.map(d=>`<tr><td>${esc(d.comprador)}</td><td>${esc(d.produto)}</td><td class="mono">${d.ton} t</td><td>${MESES[d.mes]}</td><td class="mono">${R$(d.preco)}/t</td><td><span class="chip">${d.tipo}</span></td></tr>`).join('')}</tbody></table>
+    <p class="rodape-nota">Nesta versão de demonstração as demandas são simuladas. Com a API ligada, elas vêm de cadastros reais de compradores (supermercados, prefeituras/PNAE, CONAB/PAA, cooperativas, CEASAs e agroindústrias).</p>
+  </div>`;
+};
+function fecharVenda(produto, ton, preco){
+  S.vendas.unshift({produto, ton, valor:ton*preco, data:new Date().toLocaleDateString('pt-BR')});
+  salvar(); pontuar(8,'Venda registrada');
+  toast('Interesse enviado! O comprador receberá seus dados de contato.');
+}
+
+PAGINAS.marketplace = () => {
+  el('conteudo').innerHTML = `
+  <div class="grade g2">
+    <div class="cartao">
+      <h2>Comprar insumos (compra coletiva)</h2>
+      <p class="sub">Junte pedidos com vizinhos e reduza o custo do frete e do insumo.</p>
+      <ul class="ok-lista">
+        <li>Calcário dolomítico — <span class="mono">R$ 210/t</span> (lote coletivo aberto: 68% preenchido)</li>
+        <li>Manivas-semente RENIVA — <span class="mono">R$ 0,45/un</span></li>
+        <li>Ração para tambaqui 32% PB — <span class="mono">R$ 4,10/kg</span></li>
+        <li>Mudas de cacau clonal — <span class="mono">R$ 6,50/un</span></li>
+        <li>Kit irrigação por gotejo 0,5 ha — <span class="mono">R$ 2.900</span></li>
+      </ul>
+    </div>
+    <div class="cartao">
+      <h2>Anunciar produto</h2>
+      <div class="campo"><label for="an-txt">O que você quer vender?</label><input id="an-txt" placeholder="ex.: 300 kg de mel de tiúba, R$ 65/kg"></div>
+      <button class="btn" onclick="anunciar()">Publicar anúncio (+5 pts)</button>
+      <ul class="ok-lista" style="margin-top:.8rem">${S.anuncios.map(a=>`<li>${esc(a)}</li>`).join('')||'<li style="color:var(--cinza)">Seus anúncios aparecerão aqui.</li>'}</ul>
+    </div>
+  </div>
+  <div class="cartao">
+    <h2>Vendas registradas</h2>
+    <table><thead><tr><th>Data</th><th>Produto</th><th class="num">Qtd.</th><th class="num">Valor</th></tr></thead>
+    <tbody>${S.vendas.map(x=>`<tr><td class="mono">${x.data}</td><td>${esc(x.produto)}</td><td class="mono">${x.ton} t</td><td class="mono">${R$(x.valor)}</td></tr>`).join('')||'<tr><td colspan="4" style="color:var(--cinza)">Nenhuma venda registrada.</td></tr>'}</tbody></table>
+  </div>`;
+};
+function anunciar(){ const t=v('an-txt'); if(!t){toast('Escreva o anúncio.');return;} S.anuncios.unshift(t); salvar(); pontuar(5,'Anúncio publicado'); PAGINAS.marketplace(); }
+
+PAGINAS.politicas = () => {
+  const aptas=POLITICAS.filter(p=>p.regra(S)), inaptas=POLITICAS.filter(p=>!p.regra(S));
+  el('conteudo').innerHTML = `
+  <div class="cartao">
+    <h2>Você está apto para</h2>
+    <p class="sub">Elegibilidade calculada automaticamente a partir do seu passaporte (CAF, área, sistemas e culturas).</p>
+    <ul class="ok-lista">${aptas.map(p=>`<li>${p.nome}</li>`).join('')||'<li style="color:var(--cinza)">Complete o passaporte para calcular.</li>'}</ul>
+  </div>
+  ${inaptas.length?`<div class="cartao"><h2>Ainda não elegível</h2><p class="sub">O que falta para destravar:</p>
+    <ul style="list-style:none">${inaptas.map(p=>`<li style="padding:.35rem 0;border-bottom:1px dashed var(--linha)">✗ ${p.nome} ${!S.perfil.caf?'<span class="chip alerta">requer CAF/DAP</span>':''}</li>`).join('')}</ul>
+    ${!S.perfil.caf?'<div class="aviso" style="margin-top:.8rem">💡 A CAF (antiga DAP) é gratuita e destrava Pronaf, PAA e PNAE. Procure o sindicato rural, o INCRA ou a emissão on-line no portal do MDA.</div>':''}
+  </div>`:''}
+  <div class="cartao"><h2>Como a plataforma ajuda</h2>
+    <ul class="ok-lista">
+      <li>Gera automaticamente o <b>projeto simplificado de crédito</b> com seus dados do passaporte.</li>
+      <li>Avisa quando abrir <b>edital compatível</b> (FAPEMA, chamadas PNAE do seu município, PAA).</li>
+      <li>Anexa o <b>Caderno de Campo Digital</b> como comprovação de atividade.</li>
+    </ul>
+  </div>`;
+};
+
+PAGINAS.tecnologias = () => {
+  const recs=TECNOLOGIAS.filter(t=>t.regra(S));
+  el('conteudo').innerHTML = `
+  <div class="cartao"><h2>Recomendações para o seu perfil</h2>
+  <p class="sub">A IA analisa área, culturas, rebanho, água e sistemas já adotados, e sugere tecnologias Embrapa com investimento e retorno estimados.</p></div>
+  ${recs.map(t=>`<div class="cartao" style="border-left:5px solid var(--verde-broto)">
+    <h3>${t.nome}</h3>
+    <p style="margin:.35rem 0 .6rem">${t.por}</p>
+    <div class="grade g4" style="font-size:.85rem">
+      <div><label>Investimento</label><span class="mono">${t.invest}</span></div>
+      <div><label>Retorno estimado</label><span class="mono">${t.retorno}</span></div>
+      <div><label>Benefício ambiental</label>${t.ambiente}</div>
+      <div><label>Crédito sugerido</label><span class="chip terra">${t.credito}</span></div>
+    </div>
+  </div>`).join('') || '<div class="cartao"><p class="sub">Complete o passaporte para receber recomendações personalizadas.</p></div>'}`;
+};
+
+/* ---------- sistemas produtivos (abas) ---------- */
+let abaSis='saf';
+PAGINAS.sistemas = () => {
+  const abas=[['saf','SAF'],['ilp','ILP / ILPF'],['sistem','Sisteminha'],['aqua','Aquicultura'],['melipo','Meliponicultura']];
+  el('conteudo').innerHTML = `<div class="tabs">${abas.map(([id,n])=>`<button class="${abaSis===id?'ativo':''}" onclick="abaSis='${id}';PAGINAS.sistemas()">${n}</button>`).join('')}</div><div id="aba"></div>`;
+  SIS[abaSis]();
+};
+const SIS={};
+SIS.saf = () => {
+  const ha=num(S.saf.ha), idade=num(S.saf.idade);
+  el('aba').innerHTML=`<div class="cartao"><h2>Inteligência para SAF</h2>
+  <div class="grade g3">
+    <div class="campo"><label for="saf-ha">Área de SAF (ha)</label><input id="saf-ha" type="number" step="0.1" value="${esc(S.saf.ha)}"></div>
+    <div class="campo"><label for="saf-idade">Idade média (anos)</label><input id="saf-idade" type="number" value="${esc(S.saf.idade)}"></div>
+    <div class="campo"><label for="saf-esp">Espécies principais</label><input id="saf-esp" value="${esc(S.saf.especies)}" placeholder="cacau, açaí, ipê, banana…"></div>
+  </div>
+  <button class="btn" onclick="S.saf={ha:v('saf-ha'),idade:v('saf-idade'),especies:v('saf-esp')};S.sistemas.saf=true;salvar();pontuar(12,'SAF atualizado');PAGINAS.sistemas()">Salvar e calcular</button>
+  ${ha>0?`<div class="grade g4" style="margin-top:1rem">
+    <div class="kpi"><div class="v">${(ha*8).toFixed(1)} t</div><div class="l">CO₂e capturado/ano</div></div>
+    <div class="kpi"><div class="v">${R$(ha*(idade>=4?12000:idade>=2?4000:800))}</div><div class="l">Receita anual potencial</div></div>
+    <div class="kpi"><div class="v">${Math.round(ha*35)}</div><div class="l">Espécies-alvo p/ biodiversidade</div></div>
+    <div class="kpi"><div class="v">${idade>=4?'plena':'formação'}</div><div class="l">Fase do sistema</div></div>
+  </div>
+  <div class="aviso" style="margin-top:.8rem">💡 Recomendações: ${idade<3?'introduzir <b>cacau nas entrelinhas</b> e <b>leguminosas de cobertura</b> (feijão-de-porco) para adubação verde.':'iniciar <b>desbaste seletivo</b> e cadastrar a produção madeireira futura no mercado.'}</div>`:''}</div>`;
+};
+SIS.ilp = () => {
+  const hp=num(S.ilp.haPasto), cab=num(S.ilp.cabecas);
+  const lotacaoAtual = hp>0? (cab/hp).toFixed(2):'—';
+  el('aba').innerHTML=`<div class="cartao"><h2>Inteligência para ILP / ILPF</h2>
+  <div class="grade g3">
+    <div class="campo"><label for="ilp-hp">Pastagem (ha)</label><input id="ilp-hp" type="number" step="0.1" value="${esc(S.ilp.haPasto)}"></div>
+    <div class="campo"><label for="ilp-hl">Lavoura (ha)</label><input id="ilp-hl" type="number" step="0.1" value="${esc(S.ilp.haLavoura)}"></div>
+    <div class="campo"><label for="ilp-cb">Rebanho (cabeças)</label><input id="ilp-cb" type="number" value="${esc(S.ilp.cabecas)}"></div>
+  </div>
+  <button class="btn" onclick="S.ilp={haPasto:v('ilp-hp'),haLavoura:v('ilp-hl'),cabecas:v('ilp-cb')};S.sistemas.ilp=true;salvar();pontuar(12,'ILP atualizado');PAGINAS.sistemas()">Salvar e calcular</button>
+  ${hp>0?`<div class="grade g4" style="margin-top:1rem">
+    <div class="kpi"><div class="v">${lotacaoAtual}</div><div class="l">Lotação atual (UA/ha)</div></div>
+    <div class="kpi"><div class="v">${(hp*1.8).toFixed(0)}</div><div class="l">Capacidade com ILP (UA)</div></div>
+    <div class="kpi"><div class="v">${(cab*0.45).toFixed(0)} kg</div><div class="l">Ganho de peso/dia (rebanho)</div></div>
+    <div class="kpi"><div class="v">${(hp*(S.sistemas.ilpf?5:1.5)).toFixed(1)} t</div><div class="l">Balanço de carbono/ano</div></div>
+  </div>
+  <div class="aviso" style="margin-top:.8rem">${cab/hp>1.8?'⚠️ Lotação acima da capacidade: risco de degradação. Recomenda-se rotação de piquetes e integração com lavoura de milho/soja para recuperar o pasto.':'✅ Lotação adequada. Próximo passo: introduzir o componente florestal (ILPF) para conforto térmico e renda de madeira.'}</div>
+  <label style="margin-top:.7rem;text-transform:none;font-size:.9rem"><input type="checkbox" ${S.sistemas.ilpf?'checked':''} onchange="S.sistemas.ilpf=this.checked;salvar();PAGINAS.sistemas()" style="width:auto"> Já possuo componente florestal (ILPF)</label>`:''}</div>`;
+};
+SIS.sistem = () => {
+  const g=num(S.sistem.galinhas), p=num(S.sistem.peixes), h=num(S.sistem.hortaM2);
+  const receita = g*22 + p*0.9*18/6 + h*4;   // estimativa mensal simples
+  el('aba').innerHTML=`<div class="cartao"><h2>Sisteminha Embrapa</h2>
+  <p class="sub">Produção integrada em pequena escala: peixes, galinhas e horta com reuso de água e nutrientes.</p>
+  <div class="grade g3">
+    <div class="campo"><label for="si-g">Galinhas</label><input id="si-g" type="number" value="${esc(S.sistem.galinhas)}"></div>
+    <div class="campo"><label for="si-p">Peixes (unid.)</label><input id="si-p" type="number" value="${esc(S.sistem.peixes)}"></div>
+    <div class="campo"><label for="si-h">Horta (m²)</label><input id="si-h" type="number" value="${esc(S.sistem.hortaM2)}"></div>
+  </div>
+  <button class="btn" onclick="S.sistem={galinhas:v('si-g'),peixes:v('si-p'),hortaM2:v('si-h')};S.sistemas.sisteminha=true;salvar();pontuar(10,'Sisteminha atualizado');PAGINAS.sistemas()">Salvar e calcular</button>
+  ${(g+p+h)>0?`<div class="grade g3" style="margin-top:1rem">
+    <div class="kpi"><div class="v">${Math.round(g*0.75*30)} ovos</div><div class="l">Produção mensal de ovos</div></div>
+    <div class="kpi"><div class="v">${R$(receita)}</div><div class="l">Valor mensal (consumo + venda)</div></div>
+    <div class="kpi"><div class="v">${R$(receita*0.4)}</div><div class="l">Excedente comercializável</div></div>
+  </div>`:''}</div>`;
+};
+SIS.aqua = () => {
+  const bio=num(S.aqua.biomassa), peso=num(S.aqua.pesoMedio), mort=num(S.aqua.mortalidade);
+  const racaoDia = bio*0.03, diasAbate = peso>0? Math.max(0, Math.round((2 - peso)/0.011)) : '—';
+  el('aba').innerHTML=`<div class="cartao"><h2>Aquicultura inteligente</h2>
+  <div class="grade g4">
+    <div class="campo"><label for="aq-esp">Espécie</label><select id="aq-esp">${['tambaqui','tilápia','tambacu','curimatã'].map(x=>`<option ${S.aqua.especie===x?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="campo"><label for="aq-bio">Biomassa total (kg)</label><input id="aq-bio" type="number" value="${esc(S.aqua.biomassa)}"></div>
+    <div class="campo"><label for="aq-peso">Peso médio (kg)</label><input id="aq-peso" type="number" step="0.05" value="${esc(S.aqua.pesoMedio)}"></div>
+    <div class="campo"><label for="aq-mor">Mortalidade no mês (%)</label><input id="aq-mor" type="number" step="0.1" value="${esc(S.aqua.mortalidade)}"></div>
+  </div>
+  <button class="btn" onclick="S.aqua={especie:v('aq-esp'),biomassa:v('aq-bio'),pesoMedio:v('aq-peso'),mortalidade:v('aq-mor')};S.sistemas.aquicultura=true;salvar();pontuar(10,'Aquicultura atualizada');PAGINAS.sistemas()">Salvar e calcular</button>
+  ${bio>0?`<div class="grade g4" style="margin-top:1rem">
+    <div class="kpi"><div class="v">${racaoDia.toFixed(1)} kg</div><div class="l">Ração/dia (3% biomassa)</div></div>
+    <div class="kpi"><div class="v">${R$(racaoDia*30*4.1)}</div><div class="l">Custo mensal de ração</div></div>
+    <div class="kpi"><div class="v">${diasAbate} dias</div><div class="l">Previsão até abate (2 kg)</div></div>
+    <div class="kpi"><div class="v">${R$(bio*14)}</div><div class="l">Valor atual do lote</div></div>
+  </div>
+  ${mort>2?'<div class="aviso" style="margin-top:.8rem">🚨 <b>Alerta sanitário:</b> mortalidade acima de 2%/mês. Verifique oxigênio ao amanhecer, reduza a ração em 30% e consulte a assistência técnica pela plataforma.</div>':''}`:''}</div>`;
+};
+SIS.melipo = () => {
+  const c=num(S.melipo.colmeias);
+  const mes=new Date().getMonth()+1, florada = (mes>=8&&mes<=12);
+  el('aba').innerHTML=`<div class="cartao"><h2>Meliponicultura</h2>
+  <div class="grade g2">
+    <div class="campo"><label for="me-c">Nº de colmeias</label><input id="me-c" type="number" value="${esc(S.melipo.colmeias)}"></div>
+    <div class="campo"><label for="me-e">Espécie</label><select id="me-e">${['tiúba (Melipona fasciculata)','uruçu-amarela (M. flavolineata)','jandaíra (M. subnitida)'].map(x=>`<option ${S.melipo.especie===x?'selected':''}>${x}</option>`).join('')}</select></div>
+  </div>
+  <button class="btn" onclick="S.melipo={colmeias:v('me-c'),especie:v('me-e')};S.sistemas.meliponicultura=true;salvar();pontuar(10,'Meliponário atualizado');PAGINAS.sistemas()">Salvar e calcular</button>
+  ${c>0?`<div class="grade g4" style="margin-top:1rem">
+    <div class="kpi"><div class="v">${(c*3).toFixed(0)} L</div><div class="l">Produção anual estimada</div></div>
+    <div class="kpi"><div class="v">${R$(c*3*120)}</div><div class="l">Receita potencial (R$ 120/L)</div></div>
+    <div class="kpi"><div class="v">${florada?'ago–dez':'—'}</div><div class="l">Calendário floral (MA)</div></div>
+    <div class="kpi"><div class="v">${mes>=10&&mes<=12?'alta':'baixa'}</div><div class="l">Chance de enxameação</div></div>
+  </div>
+  <div class="aviso" style="margin-top:.8rem">💡 ${florada?'Florada ativa: pese as colmeias quinzenalmente e prepare potes de coleta.':'Entressafra: reforce a alimentação com xarope 1:1 e faça divisões apenas se a colônia estiver forte.'}</div>`:''}</div>`;
+};
+</script>
+
+
+<script>
+/* =====================================================================
+   BLOCO 4 — Gêmeo digital, clima, assistente IA, certificação,
+   recompensas, painel Embrapa e inicialização
+   ===================================================================== */
+PAGINAS.simulador = () => {
+  el('conteudo').innerHTML = `
+  <div class="cartao">
+    <h2>Gêmeo digital da propriedade</h2>
+    <p class="sub">Simule mudanças antes de investir. Os cenários usam os dados reais do seu passaporte.</p>
+    <div class="grade g3">
+      <div class="campo"><label for="sim-saf">+ SAF (ha)</label><input id="sim-saf" type="range" min="0" max="10" step="0.5" value="0" oninput="simular()"></div>
+      <div class="campo"><label for="sim-ilpf">Pastagem → ILPF (ha)</label><input id="sim-ilpf" type="range" min="0" max="${Math.max(1,num(S.ilp.haPasto))}" step="0.5" value="0" oninput="simular()"></div>
+      <div class="campo"><label style="text-transform:none;font-size:.9rem"><input id="sim-sist" type="checkbox" onchange="simular()" style="width:auto"> Implantar Sisteminha</label></div>
+    </div>
+    <div id="sim-out"></div>
+  </div>`;
+  simular();
+};
+function simular(){
+  const safHa=num(v('sim-saf')), ilpfHa=num(v('sim-ilpf')), sist=el('sim-sist')?.checked;
+  const rendaBase = previsoes().reduce((a,b)=>a+b.receita,0);
+  const dRenda = safHa*12000*0.6 + ilpfHa*2600 + (sist?7200:0);
+  const dCarbono = safHa*8 + ilpfHa*3.5;
+  const invest = safHa*11000 + ilpfHa*5500 + (sist?6000:0);
+  const larg = x => Math.min(100, x/Math.max(1,(rendaBase+dRenda))*100);
+  el('sim-out').innerHTML = `
+  <div class="grade g4" style="margin:1rem 0">
+    <div class="kpi"><div class="v">+${R$(dRenda)}</div><div class="l">Renda adicional/ano</div></div>
+    <div class="kpi"><div class="v">+${dCarbono.toFixed(1)} t</div><div class="l">CO₂e/ano</div></div>
+    <div class="kpi"><div class="v">${R$(invest)}</div><div class="l">Investimento estimado</div></div>
+    <div class="kpi"><div class="v">${invest>0?(invest/Math.max(1,dRenda)).toFixed(1):'0'} anos</div><div class="l">Retorno do investimento</div></div>
+  </div>
+  <div class="sim-res">
+    <div style="margin:.3rem 0">Renda atual&nbsp; <span class="mono">${R$(rendaBase)}</span><div class="barra"><i style="width:${larg(rendaBase)}%;background:var(--cinza)"></i></div></div>
+    <div style="margin:.3rem 0">Renda no cenário&nbsp; <span class="mono">${R$(rendaBase+dRenda)}</span><div class="barra"><i style="width:${larg(rendaBase+dRenda)}%"></i></div></div>
+  </div>
+  <p class="rodape-nota">"E se eu aumentar 2 ha de SAF?" · "E se converter pastagem em ILPF?" · "E se colocar um Sisteminha?" — arraste os controles e veja o efeito na renda e no carbono.</p>`;
+}
+
+PAGINAS.clima = () => {
+  const mes=new Date().getMonth()+1;
+  const chuvoso = (mes>=12||mes<=5);
+  el('conteudo').innerHTML = `
+  <div class="cartao">
+    <h2>Assistente climático</h2>
+    <p class="sub">Nesta demonstração os alertas seguem a climatologia do Maranhão. Na versão com API, integram-se INMET, CPTEC e MapBiomas (todos com dados abertos e gratuitos).</p>
+    <div class="grade g2">
+      <div class="aviso">${chuvoso?'🌧️ <b>Estação chuvosa (dez–mai).</b> Janela ideal de plantio para mandioca, milho e arroz. Atenção a excesso hídrico em baixadas.':'☀️ <b>Estação seca (jun–nov).</b> Priorize irrigação nas hortaliças, reserve volumoso para o rebanho e redobre a vigilância contra queimadas.'}</div>
+      <div class="aviso">${chuvoso?'⚠️ Risco de veranicos em fevereiro: escalone o plantio do feijão-caupi em 2–3 datas.':'🔥 <b>Alerta de queimadas:</b> mantenha aceiros de 3 m e evite fogo para limpeza — multas e perda de certificação.'}</div>
+    </div>
+    <table style="margin-top:1rem"><thead><tr><th>Alerta monitorado</th><th>Fonte (versão com API)</th><th>Ação sugerida</th></tr></thead><tbody>
+      <tr><td>Seca / veranico</td><td class="mono">INMET</td><td>Adiar plantio; irrigar</td></tr>
+      <tr><td>Chuva intensa</td><td class="mono">CPTEC/INPE</td><td>Drenagem; adiar colheita</td></tr>
+      <tr><td>Calor extremo</td><td class="mono">INMET</td><td>Sombreamento animal (ILPF ajuda)</td></tr>
+      <tr><td>Foco de queimada próximo</td><td class="mono">INPE Queimadas</td><td>Aceiro; acionar brigada</td></tr>
+      <tr><td>Mudança de uso do solo</td><td class="mono">MapBiomas Alerta</td><td>Verificação no CAR</td></tr>
+    </tbody></table>
+  </div>`;
+};
+
+/* ---------- assistente IA (regras locais + gancho para API) ---------- */
+PAGINAS.assistente = () => {
+  el('conteudo').innerHTML = `
+  <div class="cartao">
+    <h2>IA da propriedade</h2>
+    <p class="sub">Responde com base nos <b>seus</b> dados. Experimente: "quanto vou colher?", "quanto vou gastar?", "qual tecnologia devo usar?", "quanto carbono sequestro?", "quanto posso ganhar?".</p>
+    <div class="chat" id="chat">${S.chat.map(m=>`<div class="msg ${m.eu?'eu':'ia'}">${esc(m.txt)}</div>`).join('')||'<div class="msg ia">Olá! Sou a IA da sua propriedade. Pergunte algo sobre a sua produção. 🌱</div>'}</div>
+    <div class="linha-chat">
+      <input id="chat-in" placeholder="Escreva sua pergunta…" onkeydown="if(event.key==='Enter')perguntar()">
+      <button class="btn" onclick="perguntar()">Enviar</button>
+    </div>
+    <p class="rodape-nota">Nesta versão estática as respostas são calculadas no navegador. Ligando a API (pasta <span class="mono">api/</span>), as perguntas passam a ser respondidas por um modelo de linguagem com acesso ao seu passaporte.</p>
+  </div>`;
+  const ch=el('chat'); ch.scrollTop=ch.scrollHeight;
+};
+function responder(q){
+  q=q.toLowerCase();
+  const prev=previsoes(); const receita=prev.reduce((a,b)=>a+b.receita,0);
+  if(!S.perfil.nome && !prev.length) return 'Ainda não conheço sua propriedade. Preencha o Passaporte Digital e volte aqui — aí minhas respostas ficam personalizadas.';
+  if(q.includes('colher')||q.includes('produção')||q.includes('produzir'))
+    return prev.length? 'Previsão de colheita:\n'+prev.map(c=>`• ${c.cultura}: ${c.ton} t (${MESES[c.mesColheita]||'contínuo'})`).join('\n') : 'Cadastre suas culturas no passaporte para eu calcular a colheita.';
+  if(q.includes('gastar')||q.includes('custo'))
+    return `Com base nas culturas cadastradas, estimo custos de produção em torno de ${R$(receita*0.45)}/ano (≈45% da receita bruta prevista de ${R$(receita)}). O detalhamento por insumo está no módulo Planejamento.`;
+  if(q.includes('ganhar')||q.includes('renda')||q.includes('receita'))
+    return `Receita bruta prevista: ${R$(receita)}/ano. Margem estimada: ${R$(receita*0.55)}. No Gêmeo Digital você simula quanto a renda sobe com SAF, ILPF ou Sisteminha.`;
+  if(q.includes('carbono'))
+    return `Sua propriedade estoca cerca de ${carbono()} t CO₂e/ano com os sistemas atuais. ${carbono()>0?'Isso pode virar receita no mercado voluntário de carbono (veja Crédito e políticas).':'Implantar SAF ou ILPF criaria estoque de carbono e possível receita extra.'}`;
+  if(q.includes('tecnolog')||q.includes('embrapa'))
+    { const r=TECNOLOGIAS.filter(t=>t.regra(S)).slice(0,3); return r.length? 'Tecnologias Embrapa recomendadas para você:\n'+r.map(t=>`• ${t.nome} — ${t.retorno}`).join('\n') : 'Complete o passaporte para eu recomendar tecnologias.'; }
+  if(q.includes('crédito')||q.includes('pronaf')||q.includes('financi'))
+    { const a=POLITICAS.filter(p=>p.regra(S)); return 'Você está apto a:\n'+a.map(p=>'✓ '+p.nome).join('\n'); }
+  if(q.includes('vender')||q.includes('comprador')||q.includes('mercado'))
+    return 'Há '+DEMANDAS.length+' demandas abertas na sua região agora. Publique sua colheita futura no Planejamento e eu cruzo com os compradores automaticamente.';
+  if(q.includes('clima')||q.includes('chuva')||q.includes('plantar'))
+    return 'No Maranhão a janela principal de plantio vai de dezembro a fevereiro (chuvas dez–mai). Veja alertas no módulo Clima.';
+  return 'Posso responder sobre: colheita prevista, custos, renda, carbono, tecnologias Embrapa, crédito e compradores. Reformule a pergunta com uma dessas palavras. 😉';
+}
+function perguntar(){
+  const q=v('chat-in'); if(!q) return;
+  S.chat.push({eu:true,txt:q}); S.chat.push({eu:false,txt:responder(q)});
+  S.chat=S.chat.slice(-30); salvar(); el('chat-in').value='';
+  PAGINAS.assistente();
+}
+
+PAGINAS.certificacao = () => {
+  const prev=previsoes();
+  el('conteudo').innerHTML = `
+  <div class="cartao">
+    <h2>Caderno de Campo Digital</h2>
+    <p class="sub">Gerado automaticamente a partir do passaporte — serve como comprovação para PNAE/PAA, crédito e certificações de boas práticas.</p>
+    <table><tbody>
+      <tr><td>Produtor</td><td class="mono">${esc(S.perfil.nome||'—')}</td></tr>
+      <tr><td>Município</td><td class="mono">${esc(S.perfil.municipio||'—')}/${esc(S.perfil.uf)}</td></tr>
+      <tr><td>Área total</td><td class="mono">${S.perfil.areaTotal||'—'} ha</td></tr>
+      <tr><td>Sistemas</td><td>${Object.entries(S.sistemas).filter(([k,x])=>x).map(([k])=>k.toUpperCase()).join(', ')||'—'}</td></tr>
+      <tr><td>Culturas / previsão</td><td>${prev.map(c=>`${c.cultura} (${c.ton} t)`).join('; ')||'—'}</td></tr>
+      <tr><td>Vendas registradas</td><td>${S.vendas.length}</td></tr>
+      <tr><td>Carbono estocado</td><td class="mono">${carbono()} t CO₂e/ano</td></tr>
+      <tr><td>Completude do cadastro</td><td class="mono">${completude()}%</td></tr>
+      <tr><td>Emitido em</td><td class="mono">${new Date().toLocaleDateString('pt-BR')}</td></tr>
+    </tbody></table>
+    <p style="margin-top:.9rem">
+      <button class="btn" onclick="window.print()">Imprimir / salvar em PDF</button>
+      <button class="btn fantasma" onclick="pontuar(6,'Caderno de campo emitido')">Registrar emissão (+6 pts)</button>
+    </p>
+  </div>
+  <div class="cartao"><h2>Selos disponíveis conforme o cadastro</h2>
+    <ul class="ok-lista">
+      <li>Rastreabilidade digital ${S.vendas.length? '<span class="chip">habilitado</span>':'<span class="chip terra">registre 1 venda</span>'}</li>
+      <li>Boas Práticas Agropecuárias ${completude()>=80? '<span class="chip">habilitado</span>':'<span class="chip terra">complete 80% do passaporte</span>'}</li>
+      <li>Agricultura de Baixo Carbono ${carbono()>0? '<span class="chip">habilitado</span>':'<span class="chip terra">requer SAF, ILP ou ILPF</span>'}</li>
+      <li>ESG do fornecedor (para venda a redes) ${(completude()>=80&&carbono()>0)? '<span class="chip">habilitado</span>':'<span class="chip terra">combine os anteriores</span>'}</li>
+    </ul>
+  </div>`;
+};
+
+PAGINAS.recompensas = () => {
+  el('conteudo').innerHTML = `
+  <div class="grade g2">
+    <div class="cartao">
+      <h2>Como ganhar pontos</h2>
+      <table><tbody>
+        <tr><td>Atualizar produção</td><td class="mono">+10</td></tr>
+        <tr><td>Atualizar identificação/área</td><td class="mono">+15</td></tr>
+        <tr><td>Atualizar SAF / sistemas</td><td class="mono">+12</td></tr>
+        <tr><td>Registrar venda / oferta</td><td class="mono">+8</td></tr>
+        <tr><td>Publicar anúncio</td><td class="mono">+5</td></tr>
+        <tr><td>Emitir caderno de campo</td><td class="mono">+6</td></tr>
+      </tbody></table>
+      <p class="rodape-nota">Níveis: ${NIVEIS.map(n=>`${n[1]} (${n[0]}+)`).join(' · ')}</p>
+    </div>
+    <div class="cartao">
+      <h2>Prêmios</h2>
+      <ul style="list-style:none">${RECOMPENSAS.map(([min,r])=>`<li style="padding:.4rem 0;border-bottom:1px dashed var(--linha)">${S.pontos>=min?'🏅':'🔒'} <b class="mono">${min} pts</b> — ${r}</li>`).join('')}</ul>
+    </div>
+  </div>
+  <div class="cartao"><h2>Histórico</h2>
+    <table><tbody>${S.historicoPontos.map(h=>`<tr><td class="mono">${h.quando}</td><td>${esc(h.motivo)}</td><td class="mono">+${h.qtd}</td></tr>`).join('')||'<tr><td style="color:var(--cinza)">Suas atualizações aparecerão aqui.</td></tr>'}</tbody></table>
+  </div>`;
+};
+
+PAGINAS.painel = () => {
+  /* agregados simulados da região + o próprio usuário anonimizado */
+  const base=[['Mandioca',412,'#5B9E3D'],['SAF',187,'#2E7D46'],['ILPF',94,'#14532D'],['Sisteminha',238,'#DFA820'],['Aquicultura',121,'#7A4A21'],['Meliponicultura',167,'#B98A2B']];
+  const max=Math.max(...base.map(b=>b[1]));
+  el('conteudo').innerHTML = `
+  <div class="cartao">
+    <h2>Painel Embrapa — visão agregada (demonstração)</h2>
+    <p class="sub">O que a Embrapa passa a enxergar <b>sem levantamentos presenciais</b>: adoção de tecnologias, produtividade, carbono e renda por município e cadeia. Dados individuais permanecem privados; só agregados são exibidos.</p>
+    <svg class="svgbar" viewBox="0 0 640 ${base.length*38+10}" role="img" aria-label="Adoção de tecnologias por número de propriedades">
+      ${base.map((b,i)=>`
+        <text x="0" y="${i*38+22}" font-size="13" font-family="Karla" fill="#1C2418">${b[0]}</text>
+        <rect x="140" y="${i*38+8}" rx="6" height="20" width="${(b[1]/max)*400}" fill="${b[2]}"></rect>
+        <text x="${148+(b[1]/max)*400}" y="${i*38+23}" font-size="12" font-family="IBM Plex Mono" fill="#5E6B58">${b[1]} propriedades</text>`).join('')}
+    </svg>
+  </div>
+  <div class="grade g4">
+    <div class="kpi"><div class="v">1.219</div><div class="l">Propriedades ativas (região)</div></div>
+    <div class="kpi"><div class="v">18,4 mil t</div><div class="l">Produção monitorada/ano</div></div>
+    <div class="kpi"><div class="v">9,7 mil t</div><div class="l">CO₂e estocado/ano</div></div>
+    <div class="kpi"><div class="v">+23%</div><div class="l">Renda média após adoção</div></div>
+  </div>
+  <div class="cartao">
+    <h2>Sua contribuição para a base</h2>
+    <ul class="ok-lista">
+      <li>Passaporte ${completude()}% completo → alimenta os indicadores do seu município de forma <b>anônima</b>.</li>
+      <li>${S.historicoPontos.length} atualizações registradas → substituem visitas de levantamento.</li>
+      <li>Vendas e preços informados → calibram os modelos de previsão de mercado.</li>
+    </ul>
+  </div>`;
+};
+
+/* ---------- inicialização ---------- */
+montarNav(); pintarPontos(); ir('inicio');
+
+/* ---------- recursos de aplicativo (PWA) ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+/* atalhos do ícone do app: /?ir=mercado etc. */
+try{
+  const alvo=new URLSearchParams(location.search).get('ir');
+  if(alvo && PAGINAS[alvo]) ir(alvo);
+}catch(e){}
+/* convite de instalação (Android/Chrome) */
+let promptInstalar=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault(); promptInstalar=e;
+  if(document.querySelector('.instalar')) return;
+  const b=document.createElement('button');
+  b.className='instalar'; b.textContent='📲 Instalar o aplicativo';
+  b.onclick=async()=>{ b.remove(); promptInstalar.prompt(); await promptInstalar.userChoice; promptInstalar=null; };
+  document.body.appendChild(b);
+});
+window.addEventListener('appinstalled',()=>{ toast('Aplicativo instalado! 🌱'); document.querySelector('.instalar')?.remove(); });
+
+</script>
+
+</body>
+</html>
